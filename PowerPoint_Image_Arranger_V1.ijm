@@ -3,6 +3,7 @@ macro "PowerPoint Image Maker" {
 	run("Collect Garbage");
 	Dialog.create("Message");
 	Dialog.addMessage("This macro will only work for 8 or fewer images");
+	Dialog.addMessage("The current version of this macro also assumes that/nall images are the same size.");
 	Dialog.show();
 	
 	function deleteDirectory(dir) {
@@ -30,7 +31,7 @@ macro "PowerPoint Image Maker" {
 		print(def_dir);
 	}
 	
-	main_dir = getDir("Choose Main Directory Containing the Image Folder");
+//	main_dir = getDir("Choose Main Directory Containing the Image Folder");
 	im_dir = getDir("Choose Folder Containing Images to be Processed");
 	file_list = getFileList(im_dir);
 	ims_in_dir = 0;
@@ -55,6 +56,11 @@ macro "PowerPoint Image Maker" {
 
 	print(im_list[0]);
 	num_ims = lengthOf(im_list);
+	
+	Dialog.create("Name Image");
+	Dialog.addString("Input filename for new image:", "filename");
+	Dialog.show();
+	filename = Dialog.getString();
 	
 	function arrange_grid(im_count) {
 		Dialog.create("Image Layout")
@@ -113,6 +119,35 @@ macro "PowerPoint Image Maker" {
 	}
 	print(grid_rows, row1_ims, row2_ims);
 	
+//	im_widths = newArray(num_ims);
+//	im_heights = newArray(num_ims);
+//	for (im=0; im<num_ims; im++) {
+//		open(im_dir+im_list[im]);
+//		im_widths[im] = Image.width;
+//		im_heights[im] = Image.height;
+//		close();
+//	}
+
+	open(im_dir+im_list[0]);
+	im_width = Image.width;
+	im_height = Image.height;
+	close();
+	
+	equal_heights = true;
+	equal_widths = false;
+	if ((grid_rows > 1)&((num_ims%2)==1) {
+		Dialog.create("Arrangement Choice");
+		Dialog.addMessage("Make the height of all images the same/nor/nmake the total widths of each row the same?");
+		Dialog.addChoice("Options:", newArray("Equal Heights", "Equal Widths"));
+		Dialog.show();
+		choice = Dialog.getChoice();
+		if (choice == "Equal Widths") {
+			equal_heights = false;
+			equal_widths = true;
+		}
+	}
+
+
 //	pp_width_in = 13.333; // Inches
 //	pp_height_in = 7.5; // Inches
 //	pp_scale = 129.1532; // Pixels per Inch
@@ -122,15 +157,43 @@ macro "PowerPoint Image Maker" {
 //	pp_width = 1920; // Also Pixels
 //	pp_height = 970; // Pixels
 //	pp_height = 1080 // Also Pixels
+//	run("Set Scale...", "distance=1722 known=13.333 unit=inch");
+
+	Dialog.create("Image Title");
+	Dialog.addCheckbox("Do you want the image to have a title?", false);
+	Dialog.addString("If yes, input title. If no, ignore.", "Image Title");
+	Dialog.show();
+	add_title = Dialog.getCheckbox();
+	im_title = Dialog.getString();
+	
+	Dialog.create("Image Color");
+	Dialog.addChoice("Choose Background Color for Image:", newArray("white", "black");
+	Dialog.show();
+	back_color = Dialog.getChoice();
+	
+	if (add_title) {
+		if (back_color=="white") {
+			setColor("black");
+		}
+		else {
+			setColor("white");
+		}
+
+		setJustification("center");
+		setFont("Monospaced", 250, "non-antialiased bold");
+		stringW = getStringWidth(im_title);
+		print(stringW);
+		stringH = getValue("font.height");
+		title_y = stringH;
+		drawString(im_title, title_x, title_y);
+	}
 
 	pp_width = 1280; // Pixels
 	pp_height = 720; // Pixels
 
-
-	print(pp_width, pp_height);
-	newImage("pp_test", "RGB black", pp_width, pp_height, 1);
-	test_dir = getDir("Desktop");
-	save(test_dir+"pp_test2");
+	newImage(filename, "RGB"+back_color, pp_width, pp_height, 1);
 	
-	run("Set Scale...", "distance=1722 known=13.333 unit=inch");
+	save(im_dir+filename);
+	
+	
 }
