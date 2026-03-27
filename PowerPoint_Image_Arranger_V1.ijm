@@ -1,4 +1,10 @@
 macro "PowerPoint Image Maker" {
+	
+	// 1-Row with 1-4 images is working
+	// 2-Rows with equal numbers of images is working
+	// 2-Rows with unequal numbers of images is not working
+	
+	close("*");
 	run("Collect Garbage");
 	run("Collect Garbage");
 	Dialog.create("Message");
@@ -143,7 +149,7 @@ macro "PowerPoint Image Maker" {
 	equal_heights = false;
 	equal_row_widths = false;
 	equal_row_ims = true;
-	if ((grid_rows > 1)&((num_ims%2)==1)) {
+	if ((grid_rows > 1)&(r1_ims != r2_ims)) {
 		equal_row_ims = false;
 		Dialog.create("Arrangement Choice");
 		Dialog.addMessage("Make the heights of the images in row 1 the same as those in row 2\nor\nmake the total widths of each row the same?");
@@ -197,12 +203,24 @@ macro "PowerPoint Image Maker" {
 		}
 
 		setJustification("left");
-		setFont("Monospaced", 30, "non-antialiased bold");
-		stringW = getStringWidth(im_title);
+		
+		font_size = 35;
+		too_big = true;
+		while (too_big) {
+			setFont("Monospaced", font_size, "non-antialiased bold");
+			stringW = getStringWidth(im_title);
+			if (stringW > pp_width) {
+				font_size -= 1;
+			}
+			else {
+				too_big = false;
+			}
+		}
+		
 //		print("String W: "+stringW);
 		title_x = (pp_width / 2) - (stringW / 2);
 		stringH = getValue("font.height");
-		title_y = stringH - 6;
+		title_y = stringH;
 		
 //		print("title_y: "+title_y);
 //		print("title_x"+title_x);
@@ -214,7 +232,12 @@ macro "PowerPoint Image Maker" {
 		width_div = pp_width / num_ims;
 		scale_val = width_div / im_width;
 		scale_h = im_height * scale_val;
-		first_y = title_y;
+		if (add_title) {
+			first_y = title_y + 10;
+		}
+		else {
+			first_y = 0;
+		}
 		im_xs = newArray(num_ims);
 		if ((scale_h + first_y) > pp_height) {
 			scale_h = pp_height - first_y;
@@ -237,7 +260,7 @@ macro "PowerPoint Image Maker" {
 		im_y = (((pp_height - first_y) / 2) + first_y) - (scale_h / 2);
 		for (im=0; im<num_ims; im++) {
 			open(im_dir+im_list[im]);
-			run("Size...", "width=width_div height=scale_h constrain average=true interpolation=Bilinear");
+			run("Size...", "width=width_div constrain average=true interpolation=Bilinear");
 			Image.copy;
 			close();
 			selectWindow(pp_image);
@@ -248,6 +271,15 @@ macro "PowerPoint Image Maker" {
 	}
 		
 	else if (grid_rows == 2) {
+		if (add_title) {
+			first_y = title_y + 10;
+		}
+		else {
+			first_y = 0;
+		}
+		
+		print("equal_row_ims: "+equal_row_ims);
+		
 		if (!equal_row_ims) {
 			if (equal_heights) {
 				r1_width_div = pp_width / r1_ims;
@@ -255,7 +287,7 @@ macro "PowerPoint Image Maker" {
 				width_div = minOf(r1_width_div, r2_width_div);
 				scale_val =  width_div / im_width;
 				scale_h = im_height * scale_val;
-				first_y = title_y;
+				
 				im_xs = newArray(num_ims);
 				im_ys = newArray(num_ims);
 				im_widths = newArray(num_ims);
@@ -267,12 +299,12 @@ macro "PowerPoint Image Maker" {
 					width_div = im_width * new_scale_val;
 					
 					extra_h = pp_height - first_y - (2 * scale_h);
-					extra_h_div = extra_h / 2;
+					extra_h_div = extra_h / 3;
 					for (i=0; i<r1_ims; i++) {
-						im_ys[i] = first_y;
+						im_ys[i] = first_y + extra_h_div;
 					}
 					for (i=r1_ims; i<num_ims; i++) {
-						im_ys[i] = first_y + scale_h + extra_h_div;
+						im_ys[i] = first_y + scale_h + (2 * extra_h_div);
 					}
 					
 					extra_width_r1 = pp_width - (width_div * r1_ims);
@@ -284,23 +316,35 @@ macro "PowerPoint Image Maker" {
 					for (i=1; i<r1_ims; i++) {
 						im_xs[i] = im_xs[i-1] + width_div + extra_width_div_r1;
 					}
-					for (i=r2_ims; i<num_ims; i++) {
+					for (i=r1_ims+1; i<num_ims; i++) {
 						im_xs[i] = im_xs[i-1] + width_div + extra_width_div_r2;
 					}
 					for (i=0; i<num_ims; i++) {
 						im_widths[i] = width_div;
 						im_heights[i] = scale_h;
 					}
+					print("width_div: "+width_div);
+					print("extra width div: "+extra_width_div);
+					
+					print("xs");
+					Array.print(im_xs);
+					print("ys");
+					Array.print(im_ys);
+					print("widths");
+					Array.print(im_widths);
+					print("heights");
+					Array.print(im_heights);
 				}
+				
 				
 				else {
 					extra_h = pp_height - first_y - (2 * scale_h);
-					extra_h_div = extra_h / 2;
+					extra_h_div = extra_h / 3;
 					for (i=0; i<r1_ims; i++) {
-						im_ys[i] = first_y;
+						im_ys[i] = first_y + extra_h_div;
 					}
 					for (i=r1_ims; i<num_ims; i++) {
-						im_ys[i] = first_y + scale_h + extra_h_div;
+						im_ys[i] = first_y + scale_h + (2 * extra_h_div);
 					}
 					
 					if (r1_ims > r2_ims) {
@@ -309,15 +353,17 @@ macro "PowerPoint Image Maker" {
 							im_xs[i] = im_xs[i-1] + width_div;
 						}
 						extra_width_r2 = pp_width - (width_div * r2_ims);
+						print("extra_width_r2: "+extra_width_r2);
 						extra_width_div_r2 = extra_width_r2 / (r2_ims + 1);
+						print("extra_width_div_r2: "+extra_width_div_r2);
 						im_xs[r1_ims] = extra_width_div_r2;
-						for (i=r2_ims; i<num_ims; i++) {
+						for (i=r1_ims+1; i<num_ims; i++) {
 							im_xs[i] = im_xs[i-1] + width_div + extra_width_div_r2;
 						}
 					}
 					else {
 						im_xs[r1_ims] = 0;
-						for (i=r2_ims; i<num_ims; i++) {
+						for (i=r1_ims+1; i<num_ims; i++) {
 							im_xs[i] = im_xs[i-1] + width_div;
 						}
 						extra_width_r1 = pp_width - (width_div * r1_ims);
@@ -332,11 +378,19 @@ macro "PowerPoint Image Maker" {
 						im_heights[i] = scale_h;
 					}
 				}
+				print("xs");
+				Array.print(im_xs);
+				print("ys");
+				Array.print(im_ys);
+				print("widths");
+				Array.print(im_widths);
+				print("heights");
+				Array.print(im_heights);
 				for (im=0; im<num_ims; im++) {
 					open(im_dir+im_list[im]);
 					width = im_widths[im];
 					height = im_heights[im];
-					run("Size...", "width=width height=height constrain average=true interpolation=Bilinear");
+					run("Size...", "width=width constrain average=true interpolation=Bilinear");
 					Image.copy;
 					close();
 					selectWindow(pp_image);
@@ -384,7 +438,7 @@ macro "PowerPoint Image Maker" {
 				for (i=1; i<r1_ims; i++) {
 					im_xs[i] = im_xs[i-1] + r1_width_div;
 				}
-				for(i=r2_ims; i<num_ims; i++) {
+				for(i=r1_ims+1; i<num_ims; i++) {
 					im_xs[i] = im_xs[i-1] + r2_width_div;
 				}
 				
@@ -408,7 +462,7 @@ macro "PowerPoint Image Maker" {
 					open(im_dir+im_list[im]);
 					width = im_widths[im];
 					height = im_heights[im];
-					run("Size...", "width=width height=height constrain average=true interpolation=Bilinear");
+					run("Size...", "width=width constrain average=true interpolation=Bilinear");
 					Image.copy;
 					close();
 					selectWindow(pp_image);
@@ -420,8 +474,11 @@ macro "PowerPoint Image Maker" {
 		}
 		else {
 			width_div = pp_width / r1_ims;
+			print("width_div: "+width_div);
 			scale_factor = width_div / im_width;
+			print("scale factor: "+scale_factor);
 			scaled_h = im_height * scale_factor;
+			print("scaled_h: "+scaled_h);
 			im_xs = newArray(num_ims);
 			im_ys = newArray(num_ims);
 			im_heights = newArray(num_ims);
@@ -429,12 +486,13 @@ macro "PowerPoint Image Maker" {
 				height_div = (pp_height - first_y) / 2;
 				scale_factor = height_div / scaled_h;
 				width_div = width_div * scale_factor;
-				extra_width = pp_width - (r1_ims * width_div)
+				extra_width = pp_width - (r1_ims * width_div);
 				extra_width_div = extra_width / (r1_ims + 1);
 				im_xs[0] = extra_width_div;
 				im_ys[0] = first_y;
+				
 				for (i=1; i<r1_ims; i++) {
-					im_xs[i] = im_xs[i-1] + width_div;
+					im_xs[i] = im_xs[i-1] + width_div + extra_width_div;
 					im_ys[i] = first_y;
 				}
 				for (i=r1_ims; i<num_ims; i++) {
@@ -444,23 +502,32 @@ macro "PowerPoint Image Maker" {
 				for (i=0; i<num_ims; i++) {
 					im_heights[i] = height_div;
 				}
+				print("width div: "+width_div);
+				Array.print(im_ys);
+				Array.print(im_xs);
 			}
-			im_xs[0] = 0;
-			for (i=1; i<r1_ims; i++) {
-					im_xs[i] = im_xs[i-1] + width_div;
-					im_ys[i] = first_y;
-			}
-			for (i=r1_ims; i<num_ims; i++) {
-				im_xs[i] = im_xs[i-r1_ims];
-				im_ys[i] = first_y + scaled_h;
-			}
-			for (i=0; i<num_ims; i++) {
-				im_heights[i] = scaled_h;
+			else {
+				im_xs[0] = 0;
+				im_mid_point = ((pp_height - first_y) / 2) + first_y;
+				extra_height_div = ((im_mid_point - scaled_h - first_y) * 2) / 3;
+				im_ys[0] = im_mid_point - scaled_h - extra_height_div;
+				for (i=1; i<r1_ims; i++) {
+						im_xs[i] = im_xs[i-1] + width_div;
+						im_ys[i] = im_ys[0];
+				}
+				for (i=r1_ims; i<num_ims; i++) {
+					im_xs[i] = im_xs[i-r1_ims];
+					im_ys[i] = im_ys[0] + extra_height_div + scaled_h;
+				}
+				for (i=0; i<num_ims; i++) {
+					im_heights[i] = scaled_h;
+				}
 			}
 			for (im=0; im<num_ims; im++) {
 				open(im_dir+im_list[im]);
 				height = im_heights[im];
-				run("Size...", "width=width_div height=height constrain average=true interpolation=Bilinear");
+				run("Size...", "width=width_div constrain average=true interpolation=Bilinear");
+				print(Image.height);
 				Image.copy;
 				close();
 				selectWindow(pp_image);
@@ -471,7 +538,9 @@ macro "PowerPoint Image Maker" {
 		}
 	}
 	
-	save(im_dir+filename);
+	parent_dir = File.getParent(im_dir)+File.separator;
+	print(parent_dir+filename);
+	save(parent_dir+filename);
 	run("Collect Garbage");
 	run("Collect Garbage");
 	exit("Saved New Image");
