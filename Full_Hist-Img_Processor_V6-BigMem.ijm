@@ -576,7 +576,7 @@ macro "Full_Histology_Image_Processor" {
 			y_positions[y] = height_sums;
 		}
 		
-		stack_width = 13800;
+		stack_width = 11000;
 		if (min_width < stack_width) {
 			stack_width = min_width;
 		}
@@ -600,6 +600,8 @@ macro "Full_Histology_Image_Processor" {
 			y_pos = y_positions[im];
 			makeRectangle(x_rect, 0, stack_width, Image.height);
 			run("Crop");
+			
+			
 			
 			if (add_labels) {
 				setColor("white");

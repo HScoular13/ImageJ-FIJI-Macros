@@ -51,7 +51,7 @@ macro "PowerPoint Image Maker" {
 	im_list = newArray(ims_in_dir);
 	im_index = 0;
 	for (i=0; i<file_list.length; i++) {
-		if (endsWith(file_list[i], ".jpg") | endsWith(file_list[i], ".tif")) {
+		if (endsWith(file_list[i], ".jpg") | endsWith(file_list[i], ".tif") | endsWith(file_list[i], ".tiff")) {
 			im_list[im_index] = file_list[i];
 			im_index += 1;
 		}
@@ -541,6 +541,9 @@ macro "PowerPoint Image Maker" {
 	parent_dir = File.getParent(im_dir)+File.separator;
 	print(parent_dir+filename);
 	save(parent_dir+filename);
+	run("Collect Garbage");
+	run("Collect Garbage");
+	close("*");
 	run("Collect Garbage");
 	run("Collect Garbage");
 	exit("Saved New Image");
