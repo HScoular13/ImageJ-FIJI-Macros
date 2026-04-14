@@ -1,4 +1,4 @@
-macro "Quite Intelligent Rotate" {
+macro "Rotate Immuno Images" {
 	function deleteDirectory(dir) {
 		del_list = getFileList(dir);
 		for (i=0; i<del_list.length; i++) {
@@ -67,101 +67,10 @@ macro "Quite Intelligent Rotate" {
 		open(im_dir + im_list[im]);
 		orig = getTitle();
 		orig_names[im] = orig;
+		
+		setForegroundColor(0, 0, 0);
+		
 		run("Set Scale...", "distance=0 known=0 pixel=1 unit=pixel");
-		
-		cbarHeight = 0.15 * Image.height;
-		cbarWidth = 150;
-		setColor(0, 0, 0);
-		fillRect(0, 0, cbarWidth, cbarHeight);
-		
-		im_height = Image.height - 4;
-		im_width = Image.width - 4;
-	
-		pix_tl = getPixel(5, 5);
-		red_tl = (pix_tl>>16)&0xff;  // extract red byte (bits 23-17)
-	    green_tl = (pix_tl>>8)&0xff; // extract green byte (bits 15-8)
-	    blue_tl = pix_tl&0xff;       // extract blue byte (bits 7-0)
-		print(red_tl, green_tl, blue_tl);
-		pix_tr = getPixel(im_width, 5);
-		red_tr = (pix_tr>>16)&0xff;  // extract red byte (bits 23-17)
-	    green_tr = (pix_tr>>8)&0xff; // extract green byte (bits 15-8)
-	    blue_tr = pix_tr&0xff;       // extract blue byte (bits 7-0)
-		print(red_tr, green_tr, blue_tr);
-		
-		if (((red_tl<30)&&(green_tl<30)&&(blue_tl<30))&&((red_tr<30)&&(green_tr<30)&&(blue_tr<30))) {
-			both_black = true;
-			top_left_black = false;
-			for (i=5; i<im_height; i++) {
-				pix = getPixel(im_width, i);
-				red = (pix>>16)&0xff;
-				blue = (pix>>8)&0xff;
-				green = pix&0xff;
-				if ((red<30)&&(blue<30)&&(green<30)) {
-					i += 1;
-				}
-				else {
-					y = i;
-					break;
-				}
-			}
-			x = im_width - 500;
-			w = 500;
-			h = 500;
-		}
-		else if ((red_tl<30)&&(green_tl<30)&&(blue_tl<30)) {
-			top_left_black = true;
-			both_black = false;
-			x = im_width - 505;
-			y = 5;
-			w = 500;
-			h = 500;
-		}
-		else {
-			top_left_black = false;
-			both_black = false;
-			x = 5;
-			y = 5;
-			w = 500;
-			h = 500;
-		}
-		makeRectangle(x, y, w, h);
-		getSelectionBounds(x, y, w, h);
-		sumR = 0;
-		sumG = 0;
-		sumB = 0;
-		count = 0;
-		
-		for (i = x; i < x + w; i++) {
-		    for (j = y; j < y + h; j++) {
-		        pix = getPixel(i, j);
-		        r = (pix>>16)&0xff;  // extract red byte (bits 23-17)
-			    g = (pix>>8)&0xff; // extract green byte (bits 15-8)
-			    b = pix&0xff;
-		        sumR += r;
-		        sumG += g;
-		        sumB += b;
-		        count++;
-		   	}
-		}
-		avgR = sumR / count;
-		avgG = sumG / count;
-		avgB = sumB / count;
-		setForegroundColor(avgR, avgG, avgB);
-		
-		if (both_black == true) {
-			floodFill(5, 5, "8-connected");
-			floodFill((im_width), 5, "8-connected");
-			floodFill(5, (im_height), "8-connected");
-			floodFill((im_width), (im_height), "8-connected");
-		}
-		else if (top_left_black == true) {
-			floodFill(5, 5, "8-connected");
-			floodFill((im_width), (im_height), "8-connected");
-		}
-		else {
-			floodFill((im_width), 5, "8-connected");
-			floodFill(5, (im_height), "8-connected");
-		}
 		
 		run("Select None");
 		
@@ -190,7 +99,7 @@ macro "Quite Intelligent Rotate" {
 		run("Size...", "width=newW height=newH average=true interpolation=Bilinear");
 		
 		run("8-bit");
-		run("Auto Threshold", "method=Otsu ignore_black black");
+		run("Auto Threshold", "method=MinError(I) white");
 		setThreshold(128, 255);
 		run("Convert to Mask");
 		run("Fill Holes");
@@ -268,7 +177,7 @@ macro "Quite Intelligent Rotate" {
 	temp_ims_in_dir = 0;
 	temp_file_list = getFileList(temp_dir);
 	for (i=0; i<temp_file_list.length; i++) {
-		if (endsWith(temp_file_list[i], ".jpg")) {
+		if (endsWith(temp_file_list[i], ".jpg")|endsWith(temp_file_list[i], ".tif")) {
 			temp_ims_in_dir += 1;
 		}
 	}
@@ -276,7 +185,7 @@ macro "Quite Intelligent Rotate" {
 	temp_im_list = newArray(temp_ims_in_dir);
 	temp_im_index = 0;
 	for (i=0; i<temp_file_list.length; i++) {
-		if (endsWith(temp_file_list[i], ".jpg")) {
+		if (endsWith(temp_file_list[i], ".jpg")|endsWith(temp_file_list[i], ".tif")) {
 			temp_im_list[temp_im_index] = temp_file_list[i];
 			temp_im_index += 1;
 		}

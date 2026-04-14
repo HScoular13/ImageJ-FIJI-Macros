@@ -189,6 +189,17 @@ macro "PowerPoint Image Maker" {
 	back_color = Dialog.getChoice();
 
 	pp_width = 1280; // Pixels
+	
+	if ((num_ims == 3)|(num_ims == 7)) {
+		pp_width = 1281;
+	}
+	else if (num_ims == 6) {
+		pp_width = 1278;
+	}
+	else {
+		pp_width = 1280;
+	}
+	
 	pp_height = 720; // Pixels
 
 	newImage(filename, "RGB"+back_color, pp_width, pp_height, 1);
@@ -261,12 +272,23 @@ macro "PowerPoint Image Maker" {
 		for (im=0; im<num_ims; im++) {
 			open(im_dir+im_list[im]);
 			run("Size...", "width=width_div constrain average=true interpolation=Bilinear");
+			copy_height = Image.height;
+			copy_y = im_y;
 			Image.copy;
 			close();
 			selectWindow(pp_image);
 			Image.paste(im_xs[im], im_y);
 			run("Collect Garbage");
 			run("Collect Garbage");
+		}
+		selectWindow(pp_image);
+		if (!add_title) {
+			pp_crop_x = 0;
+			pp_crop_y = copy_y;
+			pp_crop_w = pp_width;
+			pp_crop_h = copy_height;
+			makeRectangle(pp_crop_x, pp_crop_y, pp_crop_w, pp_crop_h);
+			run("Crop");
 		}
 	}
 		
@@ -391,6 +413,7 @@ macro "PowerPoint Image Maker" {
 					width = im_widths[im];
 					height = im_heights[im];
 					run("Size...", "width=width constrain average=true interpolation=Bilinear");
+					copy_height = Image.height;
 					Image.copy;
 					close();
 					selectWindow(pp_image);
@@ -463,6 +486,7 @@ macro "PowerPoint Image Maker" {
 					width = im_widths[im];
 					height = im_heights[im];
 					run("Size...", "width=width constrain average=true interpolation=Bilinear");
+					copy_height = Image.height;
 					Image.copy;
 					close();
 					selectWindow(pp_image);
@@ -527,6 +551,7 @@ macro "PowerPoint Image Maker" {
 				open(im_dir+im_list[im]);
 				height = im_heights[im];
 				run("Size...", "width=width_div constrain average=true interpolation=Bilinear");
+				copy_height = Image.height;
 				print(Image.height);
 				Image.copy;
 				close();

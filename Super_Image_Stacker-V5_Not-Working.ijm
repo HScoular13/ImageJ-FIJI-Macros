@@ -364,13 +364,35 @@ macro "Image Stacker + User Input" {
 			drawString(im_tags[im], 0, text_y, "black");
 		}
 		
+		
+	}
+	Array.print(crop_xs);
+	Array.print(crop_ys);
+	Array.print(crop_Ws);
+	Array.print(crop_Hs);
+	Array.print(crop_Hs);
+	new_height_sum = 0;
+	for (i=0; i<num_ims; i++) {
+		new_height_sum += crop_Hs[i];
+	}
+	
+	selectWindow(stack);
+	run("Canvas Size...", "width=stack_width height=new_height_sum position=Bottom-Center zero");
+	
+	y_pos = newArray(num_ims+1);
+	y_pos[0] = 0;
+	
+	for (im=0; im<num_ims; im++) {
+		selectWindow(im_list[im]);
+		y_pos[im+1] = Image.height;
 		Image.copy;
-		close(current_im);
+		close();
 		selectWindow(stack);
-		Image.paste(0, y_pos);
+		Image.paste(0, y_pos[im]);
 		run("Collect Garbage");
 		run("Collect Garbage");
 	}
+	
 	
 	setColor("white");
 	setJustification("left");
