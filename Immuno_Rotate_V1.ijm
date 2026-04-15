@@ -63,6 +63,9 @@ macro "Rotate Immuno Images" {
 	angles = newArray(num_ims);
 	orig_names = newArray(num_ims);
 	
+	// This assumes the scale bar is either in the top right or bottom left
+	img_scales = File.open(im_dir+"Img_Scales.txt");
+	
 	for (im=0; im<num_ims; im++) {
 		open(im_dir + im_list[im]);
 		orig = getTitle();
@@ -73,6 +76,102 @@ macro "Rotate Immuno Images" {
 		run("Set Scale...", "distance=0 known=0 pixel=1 unit=pixel");
 		
 		run("Select None");
+		
+		setColor(0, 0, 0);
+		floodFill(5, 0, "8-connected");
+		floodFill(5, Image.height, "8-connected");
+		
+		corner1x = 0;
+		corner1y = Image.height - 40;
+		corner1w = 220;
+		corner1h = 40;
+		
+		corner2x = Image.width - 220;
+		corner2y = 0;
+		corner2w = 220;
+		corner2h = 40;
+		
+		bl_x = newArray(corner1w - corner1x + 1);
+		bl_y = newArray(Image.height - corner1y + 1);
+		avg_bl_x = 0;
+		best_bl_x = newArray(corner1w - corner1x + 1);
+		best_bl_y = 0;
+		tr_x = newArray(Image.width - corner2x + 1);
+		tr_y = newArray(corner2h + 1);
+		avg_tr_x = 0;
+		best_tr_x = newArray(Image.width - corner2x + 1);
+		best_tr_y = 0;
+		
+		for (y=corner1y; y<Image.height; y++) {
+			for (x=0; x<lengthOf(bl_x); x++) {
+				pix = getPixel(x, y);
+				red = (pix>>16)&0xff;
+				blue = (pix>>8)&0xff;
+				green = pix&0xff;
+				if ((red == 255)&(blue == 255)&(green == 255)) {
+					bl_x[x] = 1;
+				}
+				else {
+					bl_x[x] = 0;
+				}
+			}
+			Array.print(bl_x);
+			Array.getStatistics(bl_x, min, max, mean, stdDev);
+			if (max == 0) {
+				continue;
+			}
+			else {
+				new_avg_bl_x = mean;
+//				print("mean: "+mean);
+				if (new_avg_bl_x > avg_bl_x) {
+					avg_bl_x = new_avg_bl_x;
+					best_bl_y = y;
+					best_bl_x = bl_x;
+				}
+			}
+		}
+		
+		best_bl_x = Array.deleteValue(best_bl_x, 0);
+		len_bl_x = lengthOf(best_bl_x);
+		
+		for (y=0; y<lengthOf(tr_y); y++) {
+			for (x=corner2x; x<Image.width; x++) {
+				pix = getPixel(x, y);
+				red = (pix>>16)&0xff;
+				blue = (pix>>8)&0xff;
+				green = pix&0xff;
+				if ((red == 255)&(blue == 255)&(green == 255)) {
+					tr_x[x] = 1;
+				}
+				else {
+					tr_x[x] = 0;
+				}
+			}
+			Array.getStatistics(tr_x, min, max, mean, stdDev);
+			if (max == 0) {
+				continue;
+			}
+			else {
+				new_avg_tr_x = mean;
+				print(new_avg_tr_x);
+				if (new_avg_tr_x > avg_tr_x) {
+					avg_tr_x = new_avg_tr_x;
+					best_tr_y = y;
+					best_tr_x = tr_x;
+				}
+			}
+		}
+		
+		best_tr_x = Array.deleteValue(best_tr_x, 0);
+		len_tr_x = lengthOf(best_tr_x);
+		print(len_bl_x);
+		print(len_tr_x);
+		scale_bar_pix = maxOf(len_bl_x, len_tr_x);
+		
+		print(img_scales, scale_bar_pix);
+		
+		fillRect(corner1x, corner1y, corner1w, corner1h);
+		fillRect(corner2x, corner2y, corner2w, corner2h);
 		
 		origW = getWidth();
 		origH = getHeight();
